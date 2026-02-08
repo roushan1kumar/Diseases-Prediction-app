@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Multiple Disease Prediction System (Streamlit App)
+Multiple Disease Prediction System (Streamlit + MySQL)
 Author: Roushan Kumar
 """
 
 import pickle
 import streamlit as st
+import mysql.connector
 from streamlit_option_menu import option_menu
 
 # -------------------------------
@@ -18,15 +19,59 @@ st.set_page_config(
 )
 
 # -------------------------------
+# MySQL Connection Function
+# -------------------------------
+def get_connection():
+    return mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="root123",   # <-- change this
+        database="disease_prediction"
+    )
+
+# -------------------------------
+# Save Prediction to MySQL
+# -------------------------------
+def save_to_mysql(name, dob, pincode, disease, result):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = """
+    INSERT INTO predictions (name, dob, pincode, disease, result)
+    VALUES (%s, %s, %s, %s, %s)
+    """
+
+    cursor.execute(query, (name, dob, pincode, disease, result))
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+# -------------------------------
+# Show Records from MySQL
+# -------------------------------
+def fetch_records():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM predictions")
+    data = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return data
+
+# -------------------------------
 # Load Models
 # -------------------------------
 @st.cache_resource
 def load_models():
     diabetes_model = pickle.load(open("diabetes_model.sav", "rb"))
-    heart_disease_model = pickle.load(open("heart_disease_model.sav", "rb"))
+    heart_model = pickle.load(open("heart_disease_model.sav", "rb"))
     parkinsons_model = pickle.load(open("parkinsons_model.sav", "rb"))
-    return diabetes_model, heart_disease_model, parkinsons_model
 
+    return diabetes_model, heart_model, parkinsons_model
 
 diabetes_model, heart_disease_model, parkinsons_model = load_models()
 
@@ -38,14 +83,14 @@ with st.sidebar:
 
     selected = option_menu(
         "Select Prediction",
-        ["Diabetes Prediction", "Heart Disease Prediction", "Parkinson's Prediction"],
-        icons=["activity", "heart", "person"],
+        ["Diabetes Prediction", "Heart Disease Prediction", "Parkinson's Prediction", "View Database Records"],
+        icons=["activity", "heart", "person", "database"],
         default_index=0
     )
 
-# ======================================================
-# Common Patient Info Function
-# ======================================================
+# -------------------------------
+# Common Patient Info
+# -------------------------------
 def patient_details():
     st.subheader("👤 Patient Details")
 
@@ -62,7 +107,6 @@ def patient_details():
 
     return name, dob, pincode
 
-
 # ======================================================
 # Diabetes Prediction Page
 # ======================================================
@@ -70,7 +114,6 @@ if selected == "Diabetes Prediction":
 
     st.header("🩸 Diabetes Prediction")
 
-    # Patient Info
     name, dob, pincode = patient_details()
 
     st.subheader("🧪 Medical Inputs")
@@ -102,21 +145,20 @@ if selected == "Diabetes Prediction":
         Age = st.number_input("Age", min_value=1)
 
     if st.button("🔍 Predict Diabetes"):
-        input_data = [[
-            float(Pregnancies), float(Glucose), float(BloodPressure),
-            float(SkinThickness), float(Insulin),
-            float(BMI), float(DPF), float(Age)
-        ]]
-
-        prediction = diabetes_model.predict(input_data)
-
-        st.info(f"Patient: {name} | DOB: {dob} | Pincode: {pincode}")
+        prediction = diabetes_model.predict([[
+            Pregnancies, Glucose, BloodPressure,
+            SkinThickness, Insulin, BMI, DPF, Age
+        ]])
 
         if prediction[0] == 1:
+            result = "Diabetic"
             st.error("⚠️ The person is Diabetic")
         else:
+            result = "Not Diabetic"
             st.success("✅ The person is NOT Diabetic")
 
+        save_to_mysql(name, dob, pincode, "Diabetes", result)
+        st.success("✅ Saved in MySQL Database")
 
 # ======================================================
 # Heart Disease Prediction Page
@@ -125,7 +167,6 @@ elif selected == "Heart Disease Prediction":
 
     st.header("❤️ Heart Disease Prediction")
 
-    # Patient Info
     name, dob, pincode = patient_details()
 
     st.subheader("🧪 Medical Inputs")
@@ -153,32 +194,30 @@ elif selected == "Heart Disease Prediction":
     sex_val = 1 if sex == "Male" else 0
 
     if st.button("🔍 Predict Heart Disease"):
-        input_data = [[
-            float(age), float(sex_val), float(cp),
-            float(trestbps), float(chol), float(thalach)
-        ]]
-
-        prediction = heart_disease_model.predict(input_data)
-
-        st.info(f"Patient: {name} | DOB: {dob} | Pincode: {pincode}")
+        prediction = heart_disease_model.predict([[
+            age, sex_val, cp, trestbps, chol, thalach
+        ]])
 
         if prediction[0] == 1:
+            result = "Heart Disease Detected"
             st.error("⚠️ High Chance of Heart Disease")
         else:
+            result = "No Heart Disease"
             st.success("✅ No Heart Disease Detected")
 
+        save_to_mysql(name, dob, pincode, "Heart Disease", result)
+        st.success("✅ Saved in MySQL Database")
 
 # ======================================================
 # Parkinson Prediction Page
 # ======================================================
 elif selected == "Parkinson's Prediction":
 
-    st.header("🧠 Parkinson's Disease Prediction")
+    st.header("🧠 Parkinson's Prediction")
 
-    # Patient Info
     name, dob, pincode = patient_details()
 
-    st.subheader("🧪 Medical Inputs")
+    st.subheader("🧪 Voice Measurement Inputs")
 
     col1, col2 = st.columns(2)
 
@@ -195,15 +234,28 @@ elif selected == "Parkinson's Prediction":
         hnr = st.number_input("HNR", min_value=0.0)
 
     if st.button("🔍 Predict Parkinson's"):
-        input_data = [[
-            float(fo), float(jitter), float(shimmer), float(hnr)
-        ]]
-
-        prediction = parkinsons_model.predict(input_data)
-
-        st.info(f"Patient: {name} | DOB: {dob} | Pincode: {pincode}")
+        prediction = parkinsons_model.predict([[fo, jitter, shimmer, hnr]])
 
         if prediction[0] == 1:
+            result = "Parkinson's Detected"
             st.error("⚠️ Parkinson's Detected")
         else:
+            result = "No Parkinson's"
             st.success("✅ No Parkinson's Detected")
+
+        save_to_mysql(name, dob, pincode, "Parkinson's", result)
+        st.success("✅ Saved in MySQL Database")
+
+# ======================================================
+# View Database Records Page
+# ======================================================
+elif selected == "View Database Records":
+
+    st.header("📋 Prediction History Stored in MySQL")
+
+    records = fetch_records()
+
+    if len(records) == 0:
+        st.warning("No records found yet.")
+    else:
+        st.table(records)
