@@ -1,0 +1,1 @@
+streamlit run "multiple_diseases_prediction.py"
