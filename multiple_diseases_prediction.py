@@ -116,3 +116,4 @@ if(selected == 'Parkinsons Prediction'):
     with col2:
       Age = st.text_input("Age")
     
+
