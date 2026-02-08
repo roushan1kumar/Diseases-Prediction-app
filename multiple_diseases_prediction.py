@@ -4,7 +4,7 @@ Multiple Disease Prediction System (Streamlit App)
 Author: Roushan Kumar
 """
 
-import os
+
 import pickle
 import streamlit as st
 from streamlit_option_menu import option_menu
@@ -23,18 +23,18 @@ st.set_page_config(
 # -------------------------------
 
 diabetes_model = pickle.load(
-    open(r"saved_models\diabetes_model.sav", "rb")
+    open("saved_models/diabetes_model.sav", "rb")
 )
 
 
 
 
 heart_disease_model = pickle.load(
-    open(r"saved_models\heart_disease_model.sav", "rb")
+    open("saved_models/heart_disease_model.sav", "rb")
 )
 
 parkinsons_model = pickle.load(
-    open(r"saved_models\parkinsons_model.sav", "rb")
+    open("saved_models/parkinsons_model.sav", "rb")
 )
 
 
@@ -166,3 +166,4 @@ elif selected == "Parkinson's Prediction":
             st.error("⚠️ Parkinson's Disease Detected")
         else:
             st.success("✅ No Parkinson's Detected")
+
