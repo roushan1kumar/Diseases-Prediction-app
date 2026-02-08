@@ -4,7 +4,6 @@ Multiple Disease Prediction System (Streamlit App)
 Author: Roushan Kumar
 """
 
-
 import pickle
 import streamlit as st
 from streamlit_option_menu import option_menu
@@ -19,17 +18,16 @@ st.set_page_config(
 )
 
 # -------------------------------
-# Load Models Safely
+# Load Models (Safe + Cached)
 # -------------------------------
-
-
-
 @st.cache_resource
 def load_models():
-    diabetes = pickle.load(open("diabetes_model.sav"), "rb"))
-    heart = pickle.load(open(os.path.join(MODEL_DIR, "heart_disease_model.sav"), "rb"))
-    parkinsons = pickle.load(open(os.path.join(MODEL_DIR, "parkinsons_model.sav"), "rb"))
-    return diabetes, heart, parkinsons
+    diabetes_model = pickle.load(open("diabetes_model.sav", "rb"))
+    heart_disease_model = pickle.load(open("heart_disease_model.sav", "rb"))
+    parkinsons_model = pickle.load(open("parkinsons_model.sav", "rb"))
+
+    return diabetes_model, heart_disease_model, parkinsons_model
+
 
 diabetes_model, heart_disease_model, parkinsons_model = load_models()
 
@@ -40,12 +38,8 @@ with st.sidebar:
     st.title("🩺 Disease Prediction App")
 
     selected = option_menu(
-        menu_title="Select Prediction",
-        options=[
-            "Diabetes Prediction",
-            "Heart Disease Prediction",
-            "Parkinson's Prediction"
-        ],
+        "Select Prediction",
+        ["Diabetes Prediction", "Heart Disease Prediction", "Parkinson's Prediction"],
         icons=["activity", "heart", "person"],
         default_index=0
     )
@@ -84,15 +78,18 @@ if selected == "Diabetes Prediction":
         Age = st.number_input("Age", min_value=1)
 
     if st.button("🔍 Predict Diabetes"):
-        prediction = diabetes_model.predict(
-            [[Pregnancies, Glucose, BloodPressure,
-              SkinThickness, Insulin, BMI, DPF, Age]]
-        )
+        input_data = [[
+            float(Pregnancies), float(Glucose), float(BloodPressure),
+            float(SkinThickness), float(Insulin), float(BMI),
+            float(DPF), float(Age)
+        ]]
+
+        prediction = diabetes_model.predict(input_data)
 
         if prediction[0] == 1:
-            st.error("⚠️ Person is Diabetic")
+            st.error("⚠️ The person is Diabetic")
         else:
-            st.success("✅ Person is NOT Diabetic")
+            st.success("✅ The person is NOT Diabetic")
 
 # ======================================================
 # Heart Disease Prediction Page
@@ -124,9 +121,12 @@ elif selected == "Heart Disease Prediction":
     sex_val = 1 if sex == "Male" else 0
 
     if st.button("🔍 Predict Heart Disease"):
-        prediction = heart_disease_model.predict(
-            [[age, sex_val, cp, trestbps, chol, thalach]]
-        )
+        input_data = [[
+            float(age), float(sex_val), float(cp),
+            float(trestbps), float(chol), float(thalach)
+        ]]
+
+        prediction = heart_disease_model.predict(input_data)
 
         if prediction[0] == 1:
             st.error("⚠️ High Chance of Heart Disease")
@@ -155,10 +155,13 @@ elif selected == "Parkinson's Prediction":
         hnr = st.number_input("HNR", min_value=0.0)
 
     if st.button("🔍 Predict Parkinson's"):
-        prediction = parkinsons_model.predict([[fo, jitter, shimmer, hnr]])
+        input_data = [[
+            float(fo), float(jitter), float(shimmer), float(hnr)
+        ]]
+
+        prediction = parkinsons_model.predict(input_data)
 
         if prediction[0] == 1:
             st.error("⚠️ Parkinson's Detected")
         else:
             st.success("✅ No Parkinson's Detected")
-
