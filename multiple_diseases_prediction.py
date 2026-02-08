@@ -18,14 +18,13 @@ st.set_page_config(
 )
 
 # -------------------------------
-# Load Models (Safe + Cached)
+# Load Models
 # -------------------------------
 @st.cache_resource
 def load_models():
     diabetes_model = pickle.load(open("diabetes_model.sav", "rb"))
     heart_disease_model = pickle.load(open("heart_disease_model.sav", "rb"))
     parkinsons_model = pickle.load(open("parkinsons_model.sav", "rb"))
-
     return diabetes_model, heart_disease_model, parkinsons_model
 
 
@@ -45,11 +44,36 @@ with st.sidebar:
     )
 
 # ======================================================
+# Common Patient Info Function
+# ======================================================
+def patient_details():
+    st.subheader("👤 Patient Details")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        name = st.text_input("Patient Name")
+
+    with col2:
+        dob = st.date_input("Date of Birth")
+
+    with col3:
+        pincode = st.text_input("Pincode")
+
+    return name, dob, pincode
+
+
+# ======================================================
 # Diabetes Prediction Page
 # ======================================================
 if selected == "Diabetes Prediction":
 
     st.header("🩸 Diabetes Prediction")
+
+    # Patient Info
+    name, dob, pincode = patient_details()
+
+    st.subheader("🧪 Medical Inputs")
 
     col1, col2, col3 = st.columns(3)
 
@@ -80,16 +104,19 @@ if selected == "Diabetes Prediction":
     if st.button("🔍 Predict Diabetes"):
         input_data = [[
             float(Pregnancies), float(Glucose), float(BloodPressure),
-            float(SkinThickness), float(Insulin), float(BMI),
-            float(DPF), float(Age)
+            float(SkinThickness), float(Insulin),
+            float(BMI), float(DPF), float(Age)
         ]]
 
         prediction = diabetes_model.predict(input_data)
+
+        st.info(f"Patient: {name} | DOB: {dob} | Pincode: {pincode}")
 
         if prediction[0] == 1:
             st.error("⚠️ The person is Diabetic")
         else:
             st.success("✅ The person is NOT Diabetic")
+
 
 # ======================================================
 # Heart Disease Prediction Page
@@ -97,6 +124,11 @@ if selected == "Diabetes Prediction":
 elif selected == "Heart Disease Prediction":
 
     st.header("❤️ Heart Disease Prediction")
+
+    # Patient Info
+    name, dob, pincode = patient_details()
+
+    st.subheader("🧪 Medical Inputs")
 
     col1, col2, col3 = st.columns(3)
 
@@ -128,10 +160,13 @@ elif selected == "Heart Disease Prediction":
 
         prediction = heart_disease_model.predict(input_data)
 
+        st.info(f"Patient: {name} | DOB: {dob} | Pincode: {pincode}")
+
         if prediction[0] == 1:
             st.error("⚠️ High Chance of Heart Disease")
         else:
             st.success("✅ No Heart Disease Detected")
+
 
 # ======================================================
 # Parkinson Prediction Page
@@ -139,6 +174,11 @@ elif selected == "Heart Disease Prediction":
 elif selected == "Parkinson's Prediction":
 
     st.header("🧠 Parkinson's Disease Prediction")
+
+    # Patient Info
+    name, dob, pincode = patient_details()
+
+    st.subheader("🧪 Medical Inputs")
 
     col1, col2 = st.columns(2)
 
@@ -160,6 +200,8 @@ elif selected == "Parkinson's Prediction":
         ]]
 
         prediction = parkinsons_model.predict(input_data)
+
+        st.info(f"Patient: {name} | DOB: {dob} | Pincode: {pincode}")
 
         if prediction[0] == 1:
             st.error("⚠️ Parkinson's Detected")
