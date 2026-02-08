@@ -25,7 +25,7 @@ def get_connection():
     return mysql.connector.connect(
         host="localhost",
         user="root",
-        password="root123",   # <-- change this
+        password="root",   # <-- change this
         database="disease_prediction"
     )
 
@@ -259,3 +259,4 @@ elif selected == "View Database Records":
         st.warning("No records found yet.")
     else:
         st.table(records)
+
