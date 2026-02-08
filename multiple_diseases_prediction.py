@@ -11,11 +11,13 @@ from streamlit_option_menu import option_menu
 
 #loading saved models
 
-diabetes_model = pickle.load(open('C:/Users/Roushan Kumar/OneDrive/Desktop/Multiple Diseases Prediction System/saved models/diabetes_model.sav','rb'))
-heart_disease_model = pickle.load(open('C:/Users/Roushan Kumar/OneDrive/Desktop/Multiple Diseases Prediction System/saved models/heart_disease_model.sav','rb'))
-parkinsons_model = pickle.load(open('C:/Users/Roushan Kumar/OneDrive/Desktop/Multiple Diseases Prediction System/saved models/parkinsons_model.sav','rb'))
+import pickle
 
+diabetes_model = pickle.load(open('diabetes_model.sav', 'rb'))
 
+heart_disease_model = pickle.load(open('heart_disease_model.sav', 'rb'))
+
+parkinsons_model = pickle.load(open('parkinsons_model.sav', 'rb'))
 
 # sidebar for navigation
 
@@ -116,4 +118,5 @@ if(selected == 'Parkinsons Prediction'):
     with col2:
       Age = st.text_input("Age")
     
+
 
